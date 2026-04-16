@@ -591,8 +591,8 @@ def run_jd_crawler(
             crawler_logger.error("❌ 未找到评论按钮。")
             return False, "未能找到评论按钮，无法继续爬取。"
 
-        crawler_logger.info("⏳ 等待评论区接口开始（约 2 秒）...")
-        time.sleep(2)
+        crawler_logger.info("⏳ 等待评论区接口开始（约 8 秒）...")
+        time.sleep(8)
 
 
         # --------------- 自动滚动翻页 ---------------  
