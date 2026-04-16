@@ -2,7 +2,7 @@ FROM python:3.9-slim-bullseye
 
 WORKDIR /app
 
-# 第1步：安装基础工具和 GPG 密钥管理
+# 第1步：安装基础工具
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     wget \
@@ -11,13 +11,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# 第2步：添加 Google Chrome 官方仓库
-RUN curl -fsSL https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
-    echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list
-
-# 第3步：安装 Google Chrome 和必要的库（不安装 chromium）
+# 第2步：安装 Chromium 和运行所需的库
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    google-chrome-stable \
+    chromium \
+    chromium-driver \
     fonts-liberation \
     libappindicator3-1 \
     libasound2 \
@@ -57,11 +54,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxkbcommon0 \
     && rm -rf /var/lib/apt/lists/*
 
-# 第4步：复制并安装 Python 依赖
+# 第3步：复制并安装 Python 依赖
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 第5步：复制应用代码
+# 第4步：复制应用代码
 COPY . .
 
 EXPOSE 10000
