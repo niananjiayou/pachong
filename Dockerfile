@@ -66,4 +66,4 @@ COPY . .
 
 EXPOSE 10000
 
-CMD gunicorn -w 1 -b 0.0.0.0:${PORT:-10000} --timeout 120 app:app
+CMD gunicorn -w 1 -b 0.0.0.0:${PORT:-10000} --timeout 300 --graceful-timeout 60 app:app
