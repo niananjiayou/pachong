@@ -18,6 +18,7 @@ RUN curl -fsSL https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key a
 # 安装 Chrome 和依赖
 RUN apt-get update && apt-get install -y --no-install-recommends \
     google-chrome-stable \
+    chromium-chromedriver \
     fonts-liberation \
     libappindicator3-1 \
     libasound2 \
