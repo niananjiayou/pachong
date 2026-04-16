@@ -437,17 +437,14 @@ def run_jd_crawler(
         if webdriver_path:  
             crawler_logger.info(f"   使用 WebDriver 路径: {webdriver_path}")  
         else:  
-            crawler_logger.warning("   未能找到驱动文件。DrissionPage 将尝试默认逻辑。")  
-
-        co.set_local_port(9333)  
-        co.set_argument("--disable-blink-features=AutomationControlled")  
+            crawler_logger.warning("   未能找到驱动文件。DrissionPage 将尝试默认逻辑。")   
 
         co.set_local_port(9333)  
         co.set_argument("--disable-blink-features=AutomationControlled")
         
         # ⭐ Render 环境特有参数
         if is_linux:
-            co.set_argument("--headless")
+            co.set_argument("--headless=new")
             co.set_argument("--no-sandbox")
             co.set_argument("--disable-gpu")
             co.set_argument("--disable-dev-shm-usage")
@@ -601,6 +598,49 @@ def run_jd_crawler(
         if not found_comment_button:
             crawler_logger.error("❌ 未找到评论按钮。")
             return False, "未能找到评论按钮，无法继续爬取。"
+
+        # ⭐ 调试：验证点击是否生效
+        time.sleep(3)
+        
+        crawler_logger.info("🔍 开始调试...")
+        
+        # 检查滚动容器是否存在
+        try:
+            result = page.run_js("""
+                const containers = [
+                    document.querySelector('div[data-virtuoso-scroller="true"]'),
+                    document.querySelector('[class*="rateListContainer"]'),
+                    document.querySelector('[class*="rateListBox"]'),
+                    document.querySelector('[class*="comment"]'),
+                    document.querySelector('[class*="rate"]')
+                ].filter(Boolean);
+                
+                const info = {
+                    found: containers.length > 0,
+                    count: containers.length,
+                    scrollHeights: containers.map(c => c.scrollHeight),
+                    clientHeights: containers.map(c => c.clientHeight)
+                };
+                
+                console.log('DEBUG:', JSON.stringify(info));
+                return info;
+            """)
+            crawler_logger.info(f"✅ 滚动容器检查: {result}")
+            
+            if not result or not result.get('found'):
+                crawler_logger.error("❌ 找不到滚动容器！可能：")
+                crawler_logger.error("   1. 点击没生效，页面还在别的标签")
+                crawler_logger.error("   2. 京东拒绝加载评论（反爬虫）")
+                crawler_logger.error("   3. 网页结构改变了")
+                # 尝试打截图
+                try:
+                    page.screenshot(path=f"debug_{int(time.time())}.png")
+                    crawler_logger.info("💾 已保存截图到 debug_*.png")
+                except:
+                    pass
+                return False, "找不到评论滚动容器。可能京东检测到自动化浏览器。"
+        except Exception as e:
+            crawler_logger.warning(f"⚠️ 调试检查失败: {e}")
 
         crawler_logger.info("⏳ 等待评论区接口开始（约 8 秒）...")
         time.sleep(8)
