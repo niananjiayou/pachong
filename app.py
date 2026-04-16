@@ -5,7 +5,6 @@ import queue          # ⭐ 新增
 import time           # ⭐ 新增
 import traceback      # ⭐ 新增
 from flask import Flask, request, jsonify, render_template, Response, send_from_directory
-import json
 from datetime import datetime
 
 # 导入你的爬虫核心逻辑
