@@ -436,12 +436,12 @@ def run_jd_crawler(
         co.set_local_port(9333)  
         co.set_argument("--disable-blink-features=AutomationControlled")  
 
-        # ⭐ Render 环境特有参数  
-        if is_linux:  
-            co.set_headless()  # 无头模式  
-            co.set_argument("--no-sandbox")  # ⭐ 必要  
-            co.set_argument("--disable-gpu")  # ⭐ 节省资源  
-            co.set_argument("--disable-dev-shm-usage")  # ⭐ 防止内存溢出  
+        # ⭐ Render 环境特有参数
+        if is_linux:
+            co.set_argument("--headless")  # ✅ 改成这个
+            co.set_argument("--no-sandbox")  # ⭐ 必要
+            co.set_argument("--disable-gpu")  # ⭐ 节省资源
+            co.set_argument("--disable-dev-shm-usage")  # ⭐ 防止内存溢出
             crawler_logger.info("   ✅ 已启用 Render 专用配置（headless + no-sandbox）")  
 
         if browser_type.lower() == "edge":  
