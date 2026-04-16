@@ -521,10 +521,6 @@ def run_jd_crawler(
             "text=全部",
             ".comment-tab",
             "[data-tab='comment']",
-            "div.tab-con li a:contains('全部')",
-            "xpath://a[contains(text(), '全部评价')]",
-            "xpath://div[@class='comment-tab']//a",
-            "text=评价",
         ]
         
         for sel in selectors:
@@ -546,12 +542,11 @@ def run_jd_crawler(
                 crawler_logger.info(f"   失败: {str(e)[:50]}")
                 continue
 
-                if not found_comment_button:
+        if not found_comment_button:
             # 尝试 JS 点击
             crawler_logger.warning("⚠️ 传统方法失败，尝试 JS 点击...")
             try:
                 page.run_js("""
-                    // 方案 1：查找 .comment-tab 下的 a 标签
                     let clicked = false;
                     const commentTabs = document.querySelectorAll('.comment-tab a');
                     for(let tab of commentTabs){
@@ -563,8 +558,6 @@ def run_jd_crawler(
                             break;
                         }
                     }
-                    
-                    // 方案 2：如果没找到，尝试 data-tab
                     if(!clicked){
                         const dataTabs = document.querySelectorAll('[data-tab="comment"]');
                         for(let tab of dataTabs){
@@ -574,8 +567,6 @@ def run_jd_crawler(
                             break;
                         }
                     }
-                    
-                    // 方案 3：如果还没找到，尝试所有 a 标签
                     if(!clicked){
                         const allLinks = document.querySelectorAll('a');
                         for(let link of allLinks){
@@ -588,7 +579,6 @@ def run_jd_crawler(
                             }
                         }
                     }
-                    
                     return clicked;
                 """)
                 time.sleep(2)
@@ -599,11 +589,11 @@ def run_jd_crawler(
 
         if not found_comment_button:
             crawler_logger.error("❌ 未找到评论按钮。")
-            return False, "未能找到评论按钮，无法继续爬取。" 
+            return False, "未能找到评论按钮，无法继续爬取。"
 
-        # 等待评论区渲染  
-        crawler_logger.info("⏳ 等待评论区接口开始（约 2 秒）...")  
-        time.sleep(2)  
+        crawler_logger.info("⏳ 等待评论区接口开始（约 2 秒）...")
+        time.sleep(2)
+
 
         # --------------- 自动滚动翻页 ---------------  
         crawler_logger.info("🌀 开始自动滚动翻页（Virtuoso scroller 触发请求）")  
