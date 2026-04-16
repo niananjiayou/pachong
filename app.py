@@ -177,16 +177,13 @@ def log_stream():
 
 
 if __name__ == '__main__':
-    # 确保 templates 文件夹存在，并且 index.html 在里面
-    # 或者将 index.html 放在 app.py 同级目录，并注释掉 render_template，使用 send_from_directory
-    print(f"Flask Template Folder: {app.template_folder}")
     # 检查 DrissionPage 是否安装
     try:
         from DrissionPage import ChromiumOptions, ChromiumPage
     except ImportError:
         flask_logger.error("DrissionPage 未安装。请运行 'pip install DrissionPage'。")
+        import sys
         sys.exit(1)
 
-    # 运行 Flask 应用
-    # debug=True 会在代码更改时自动重载，但可能导致线程问题，部署时应设置为 False
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # 本地开发运行（仅在本地电脑上用）
+    app.run(debug=False, host='127.0.0.1', port=5000)
