@@ -546,19 +546,50 @@ def run_jd_crawler(
                 crawler_logger.info(f"   失败: {str(e)[:50]}")
                 continue
 
-        if not found_comment_button:
+                if not found_comment_button:
             # 尝试 JS 点击
             crawler_logger.warning("⚠️ 传统方法失败，尝试 JS 点击...")
             try:
                 page.run_js("""
-                    const tabs = document.querySelectorAll('.comment-tab a, [data-tab="comment"], a:contains("全部评价")');
-                    for(let tab of tabs){
-                        if(tab.textContent.includes('全部')){
+                    // 方案 1：查找 .comment-tab 下的 a 标签
+                    let clicked = false;
+                    const commentTabs = document.querySelectorAll('.comment-tab a');
+                    for(let tab of commentTabs){
+                        const text = tab.textContent.trim();
+                        if(text.includes('全部') || text === '全部评价'){
                             tab.click();
-                            console.log('JS clicked');
+                            console.log('点击成功：' + text);
+                            clicked = true;
                             break;
                         }
                     }
+                    
+                    // 方案 2：如果没找到，尝试 data-tab
+                    if(!clicked){
+                        const dataTabs = document.querySelectorAll('[data-tab="comment"]');
+                        for(let tab of dataTabs){
+                            tab.click();
+                            console.log('点击成功：data-tab');
+                            clicked = true;
+                            break;
+                        }
+                    }
+                    
+                    // 方案 3：如果还没找到，尝试所有 a 标签
+                    if(!clicked){
+                        const allLinks = document.querySelectorAll('a');
+                        for(let link of allLinks){
+                            const text = link.textContent.trim();
+                            if(text.includes('全部') && text.includes('评')){
+                                link.click();
+                                console.log('点击成功：' + text);
+                                clicked = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    return clicked;
                 """)
                 time.sleep(2)
                 found_comment_button = True
