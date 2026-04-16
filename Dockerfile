@@ -2,7 +2,7 @@ FROM python:3.9-slim-bullseye
 
 WORKDIR /app
 
-# 安装基础工具
+# 第1步：安装基础工具和 GPG 密钥管理
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     wget \
@@ -11,14 +11,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# 添加 Google Chrome 官方仓库
+# 第2步：添加 Google Chrome 官方仓库
 RUN curl -fsSL https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
     echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list
 
-# 安装 Chrome 和依赖
+# 第3步：安装 Google Chrome 和必要的库（不安装 chromium）
 RUN apt-get update && apt-get install -y --no-install-recommends \
     google-chrome-stable \
-    chromium-chromedriver \
     fonts-liberation \
     libappindicator3-1 \
     libasound2 \
@@ -31,6 +30,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libexpat1 \
     libfontconfig1 \
     libgbm1 \
+    libgcc1 \
     libgdk-pixbuf2.0-0 \
     libglib2.0-0 \
     libgtk-3-0 \
@@ -52,16 +52,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxrender1 \
     libxss1 \
     libxtst6 \
-    ca-certificates \
     libu2f-udev \
     libvpx6 \
+    libxkbcommon0 \
     && rm -rf /var/lib/apt/lists/*
 
-# 复制 requirements.txt 并安装 Python 依赖
+# 第4步：复制并安装 Python 依赖
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 复制应用代码
+# 第5步：复制应用代码
 COPY . .
 
 EXPOSE 10000
