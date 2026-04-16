@@ -745,15 +745,18 @@ def run_jd_crawler(
         crawler_logger.error(f"❌ 爬虫执行出错: {e}")  
         crawler_logger.error(traceback.format_exc())  
         return False, f"爬虫执行过程中发生错误: {str(e)}"  
-    finally:  
-        if page is not None:  
-            should_keep_open = keep_browser_open_on_fail and (not success or user_stopped or exception_happened)  
-            if should_keep_open:  
-                crawler_logger.warning(  
-                    "🛑 由于任务失败/停止/异常，浏览器不会自动关闭以便你排查。"  
-                    "请手动关闭浏览器窗口。"  
-                )  
-                # 这里不 quit  
-            else:  
-                try:  
-                    page.
+    finally:
+        if page is not None:
+            should_keep_open = keep_browser_open_on_fail and (not success or user_stopped or exception_happened)
+            if should_keep_open:
+                crawler_logger.warning(
+                    "🛑 由于任务失败/停止/异常，浏览器不会自动关闭以便你排查。"
+                    "请手动关闭浏览器窗口。"
+                )
+                # 这里不 quit
+            else:
+                try:
+                    page.quit()
+                    crawler_logger.info("✅ 浏览器已关闭。")
+                except Exception:
+                    pass
