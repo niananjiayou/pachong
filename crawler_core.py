@@ -1,6 +1,7 @@
 import sys  
 import time  
 import os  
+import random
 import traceback  
 import logging  
 import json  
@@ -494,13 +495,53 @@ def run_jd_crawler(
         url = f"https://item.jd.com/{product_id}.html"  
         crawler_logger.info("📥 打开页面: %s", url)  
 
+        # 🔥 新增：隐藏 webdriver 标记
+        crawler_logger.info("🔒 应用反爬虫对策...")
+        try:
+            page.run_js("""
+                Object.defineProperty(navigator, 'webdriver', {
+                    get: () => false,
+                });
+                Object.defineProperty(navigator, 'plugins', {
+                    get: () => [1, 2, 3, 4, 5],
+                });
+                Object.defineProperty(navigator, 'languages', {
+                    get: () => ['zh-CN', 'zh', 'en-US', 'en'],
+                });
+            """)
+            crawler_logger.info("✅ 反爬虫对策已应用")
+        except Exception as e:
+            crawler_logger.warning(f"⚠️ 反爬虫脚本执行失败: {e}")
+        
+        
         # 建议：从打开页面就开始 listen，避免漏接口  
         page.listen.start()  
 
         page.get(url, timeout=30)  
-        time.sleep(3)  
-        crawler_logger.info("✅ 页面加载完成\n")  
+        time.sleep(8)  # 增加到 8 秒，让页面充分加载
+        
+        # 🔥 新增：检查页面是否真的加载完了
+        try:
+            page.run_js("""
+                return document.readyState === 'complete' && 
+                       document.body.clientHeight > 100;
+            """)
+            time.sleep(3)
+        except:
+            pass
+        
+        crawler_logger.info("✅ 页面加载完成\n") 
 
+        # 🔥 检查是否被刷新
+        if "The page is refreshed" in page.html or len(page.html) < 5000:
+            crawler_logger.error("❌ 页面被刷新或内容过少，可能被反爬虫拦截")
+            crawler_logger.error("💡 建议：")
+            crawler_logger.error("   1. 等待 5 分钟后重试")
+            crawler_logger.error("   2. 换个商品 ID 试试")
+            crawler_logger.error("   3. 使用代理 IP")
+            return False, "页面被刷新，可能被反爬虫拦截。请稍后重试。"
+        
+        
         # 登录检测（简单兜底）  
         if "passport.jd.com" in page.url:  
             crawler_logger.warning("⚠️ 检测到需要登录，请手动完成登录（最多 5 分钟）...")  
@@ -521,7 +562,22 @@ def run_jd_crawler(
 
         # ===== 点击全部评价 =====
         crawler_logger.info("🔍 寻找评论按钮并点击...")
-        time.sleep(4)  # 增加加载时间
+        time.sleep(6)  # 增加到 6 秒
+        
+        # 🔥 新增：检查页面稳定性
+        crawler_logger.info("⏳ 等待页面稳定...")
+        try:
+            # 等到页面不再变化
+            for _ in range(5):
+                height_before = page.run_js("return document.body.scrollHeight")
+                time.sleep(1)
+                height_after = page.run_js("return document.body.scrollHeight")
+                if height_before == height_after:
+                    break
+        except:
+            pass
+        
+        time.sleep(2)
         
         found_comment_button = False
         selectors = [
