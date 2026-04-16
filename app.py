@@ -185,5 +185,5 @@ if __name__ == '__main__':
         import sys
         sys.exit(1)
 
-    # 本地开发运行（仅在本地电脑上用）
+    # 仅本地开发时运行
     app.run(debug=False, host='127.0.0.1', port=5000)
