@@ -61,8 +61,11 @@ def find_chrome_path():
     is_linux = platform.system() == "Linux"  
     
     if is_linux:  
-        # Render 云环境：不返回路径，让 DrissionPage 自动用 Chromium  
-        crawler_logger.info("   🌐 检测到 Linux 环境（Render），使用系统 Chromium")  
+        # Render 云环境：使用系统 Chromium  
+        chromium_path = "/usr/bin/chromium"
+        if os.path.exists(chromium_path):
+            crawler_logger.info("   🌐 检测到 Linux 环境（Render），使用系统 Chromium")  
+            return chromium_path
         return None  
     
     # Windows 本地环境  
@@ -77,12 +80,15 @@ def find_chrome_path():
 
 
 def find_edge_path():  
-    """在 Windows 本地查找 Edge 浏览器"""  
+    """在 Windows 本地查找 Edge 浏览器，Render 上使用 Chromium"""  
     is_linux = platform.system() == "Linux"  
     
     if is_linux:  
-        # Render 云环境：不返回路径  
-        crawler_logger.info("   🌐 检测到 Linux 环境（Render），使用系统 Chromium")  
+        # Render 云环境：使用 Chromium 替代 Edge  
+        chromium_path = "/usr/bin/chromium"
+        if os.path.exists(chromium_path):
+            crawler_logger.info("   🌐 检测到 Linux 环境（Render），使用系统 Chromium 替代 Edge")  
+            return chromium_path
         return None  
     
     # Windows 本地环境  
@@ -93,7 +99,7 @@ def find_edge_path():
     for path in paths:  
         if os.path.exists(path):  
             return path  
-    return None  
+    return None    
 
 
 def find_webdriver_path(browser_type):  
@@ -436,13 +442,18 @@ def run_jd_crawler(
         co.set_local_port(9333)  
         co.set_argument("--disable-blink-features=AutomationControlled")  
 
+        co.set_local_port(9333)  
+        co.set_argument("--disable-blink-features=AutomationControlled")
+        
         # ⭐ Render 环境特有参数
         if is_linux:
-            co.set_argument("--headless")  # ✅ 改成这个
-            co.set_argument("--no-sandbox")  # ⭐ 必要
-            co.set_argument("--disable-gpu")  # ⭐ 节省资源
-            co.set_argument("--disable-dev-shm-usage")  # ⭐ 防止内存溢出
-            crawler_logger.info("   ✅ 已启用 Render 专用配置（headless + no-sandbox）")  
+            co.set_argument("--headless")
+            co.set_argument("--no-sandbox")
+            co.set_argument("--disable-gpu")
+            co.set_argument("--disable-dev-shm-usage")
+            co.set_browser_path("/usr/bin/chromium")  # 🔥 明确指定 Chromium 路径
+            crawler_logger.info("   ✅ 使用系统 Chromium 浏览器: /usr/bin/chromium")
+ 
 
         if browser_type.lower() == "edge":  
             co.set_argument(  
