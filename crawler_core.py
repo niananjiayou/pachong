@@ -511,25 +511,64 @@ def run_jd_crawler(
             except Exception:  
                 pass  
 
-        # ===== 点击全部评价 =====  
-        crawler_logger.info("🔍 寻找评论按钮并点击...")  
-        found_comment_button = False  
-        for sel in ["text=全部评价", "text=全部", ".comment-tab"]:  
-            try:  
-                btn = page.ele(sel, timeout=3)  
-                if btn:  
-                    btn.scroll.to_see()  
-                    time.sleep(0.8)  
-                    btn.click()  
-                    crawler_logger.info(f"✅ 已点击评论按钮 (selector: {sel})\n")  
-                    found_comment_button = True  
-                    break  
-            except Exception:  
-                continue  
+        # ===== 点击全部评价 =====
+        crawler_logger.info("🔍 寻找评论按钮并点击...")
+        time.sleep(4)  # 增加加载时间
+        
+        found_comment_button = False
+        selectors = [
+            "text=全部评价",
+            "text=全部",
+            ".comment-tab",
+            "[data-tab='comment']",
+            "div.tab-con li a:contains('全部')",
+            "xpath://a[contains(text(), '全部评价')]",
+            "xpath://div[@class='comment-tab']//a",
+            "text=评价",
+        ]
+        
+        for sel in selectors:
+            if check_for_stop():
+                user_stopped = True
+                return False, "用户中止爬取。"
+            
+            try:
+                crawler_logger.info(f"   尝试选择器: {sel}")
+                btn = page.ele(sel, timeout=5)
+                if btn:
+                    btn.scroll.to_see()
+                    time.sleep(1.5)
+                    btn.click()
+                    crawler_logger.info(f"✅ 已点击评论按钮 (selector: {sel})\n")
+                    found_comment_button = True
+                    break
+            except Exception as e:
+                crawler_logger.info(f"   失败: {str(e)[:50]}")
+                continue
 
-        if not found_comment_button:  
-            crawler_logger.error("❌ 未找到评论按钮。")  
-            return False, "未能找到评论按钮，无法继续爬取。"  
+        if not found_comment_button:
+            # 尝试 JS 点击
+            crawler_logger.warning("⚠️ 传统方法失败，尝试 JS 点击...")
+            try:
+                page.run_js("""
+                    const tabs = document.querySelectorAll('.comment-tab a, [data-tab="comment"], a:contains("全部评价")');
+                    for(let tab of tabs){
+                        if(tab.textContent.includes('全部')){
+                            tab.click();
+                            console.log('JS clicked');
+                            break;
+                        }
+                    }
+                """)
+                time.sleep(2)
+                found_comment_button = True
+                crawler_logger.info("✅ 已通过 JS 点击评论按钮\n")
+            except Exception as e:
+                crawler_logger.error(f"❌ JS 点击也失败: {e}")
+
+        if not found_comment_button:
+            crawler_logger.error("❌ 未找到评论按钮。")
+            return False, "未能找到评论按钮，无法继续爬取。" 
 
         # 等待评论区渲染  
         crawler_logger.info("⏳ 等待评论区接口开始（约 2 秒）...")  
